@@ -453,44 +453,13 @@
   <button class="nav-btn"        id="nb-plan"  onclick="switchTab('plan')"><span class="nav-icon">🗓</span><span class="nav-label">План</span></button>
 </nav>
 
-<script>
+<script type="module">
+import { H, K, VOCAB, qPool, checkTypeAnswer, streakMsg, getNextIdx, toggleLearnSet } from './src/logic.js';
+
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 function haptic(s)  { try { tg?.HapticFeedback?.impactOccurred(s); } catch(e){} }
 function hapticN(t) { try { tg?.HapticFeedback?.notificationOccurred(t); } catch(e){} }
-
-// ── ДАННЫЕ ──
-const H = [
-  {c:'あ',r:'a'},{c:'い',r:'i'},{c:'う',r:'u'},{c:'え',r:'e'},{c:'お',r:'o'},
-  {c:'か',r:'ka'},{c:'き',r:'ki'},{c:'く',r:'ku'},{c:'け',r:'ke'},{c:'こ',r:'ko'},
-  {c:'さ',r:'sa'},{c:'し',r:'shi'},{c:'す',r:'su'},{c:'せ',r:'se'},{c:'そ',r:'so'},
-  {c:'た',r:'ta'},{c:'ち',r:'chi'},{c:'つ',r:'tsu'},{c:'て',r:'te'},{c:'と',r:'to'},
-  {c:'な',r:'na'},{c:'に',r:'ni'},{c:'ぬ',r:'nu'},{c:'ね',r:'ne'},{c:'の',r:'no'},
-  {c:'は',r:'ha'},{c:'ひ',r:'hi'},{c:'ふ',r:'fu'},{c:'へ',r:'he'},{c:'ほ',r:'ho'},
-  {c:'ま',r:'ma'},{c:'み',r:'mi'},{c:'む',r:'mu'},{c:'め',r:'me'},{c:'も',r:'mo'},
-  {c:'や',r:'ya'},{c:'ゆ',r:'yu'},{c:'よ',r:'yo'},
-  {c:'ら',r:'ra'},{c:'り',r:'ri'},{c:'る',r:'ru'},{c:'れ',r:'re'},{c:'ろ',r:'ro'},
-  {c:'わ',r:'wa'},{c:'を',r:'wo'},{c:'ん',r:'n'}
-];
-const K = [
-  {c:'ア',r:'a'},{c:'イ',r:'i'},{c:'ウ',r:'u'},{c:'エ',r:'e'},{c:'オ',r:'o'},
-  {c:'カ',r:'ka'},{c:'キ',r:'ki'},{c:'ク',r:'ku'},{c:'ケ',r:'ke'},{c:'コ',r:'ko'},
-  {c:'サ',r:'sa'},{c:'シ',r:'shi'},{c:'ス',r:'su'},{c:'セ',r:'se'},{c:'ソ',r:'so'},
-  {c:'タ',r:'ta'},{c:'チ',r:'chi'},{c:'ツ',r:'tsu'},{c:'テ',r:'te'},{c:'ト',r:'to'},
-  {c:'ナ',r:'na'},{c:'ニ',r:'ni'},{c:'ヌ',r:'nu'},{c:'ネ',r:'ne'},{c:'ノ',r:'no'},
-  {c:'ハ',r:'ha'},{c:'ヒ',r:'hi'},{c:'フ',r:'fu'},{c:'ヘ',r:'he'},{c:'ホ',r:'ho'},
-  {c:'マ',r:'ma'},{c:'ミ',r:'mi'},{c:'ム',r:'mu'},{c:'メ',r:'me'},{c:'モ',r:'mo'},
-  {c:'ヤ',r:'ya'},{c:'ユ',r:'yu'},{c:'ヨ',r:'yo'},
-  {c:'ラ',r:'ra'},{c:'リ',r:'ri'},{c:'ル',r:'ru'},{c:'レ',r:'re'},{c:'ロ',r:'ro'},
-  {c:'ワ',r:'wa'},{c:'ヲ',r:'wo'},{c:'ン',r:'n'}
-];
-const VOCAB = {
-  'Приветствия': [{jp:'こんにちは',r:'konnichiwa',ru:'Привет / Добрый день'},{jp:'おはよう',r:'ohayou',ru:'Доброе утро'},{jp:'こんばんは',r:'konbanwa',ru:'Добрый вечер'},{jp:'さようなら',r:'sayounara',ru:'До свидания'},{jp:'ありがとう',r:'arigatou',ru:'Спасибо'},{jp:'すみません',r:'sumimasen',ru:'Извините'},{jp:'はい',r:'hai',ru:'Да'},{jp:'いいえ',r:'iie',ru:'Нет'},{jp:'どうぞ',r:'douzo',ru:'Пожалуйста'},{jp:'わかりました',r:'wakarimashita',ru:'Я понял(а)'}],
-  'Числа': [{jp:'いち',r:'ichi',ru:'1'},{jp:'に',r:'ni',ru:'2'},{jp:'さん',r:'san',ru:'3'},{jp:'し／よん',r:'shi/yon',ru:'4'},{jp:'ご',r:'go',ru:'5'},{jp:'ろく',r:'roku',ru:'6'},{jp:'しち／なな',r:'shichi/nana',ru:'7'},{jp:'はち',r:'hachi',ru:'8'},{jp:'きゅう',r:'kyuu',ru:'9'},{jp:'じゅう',r:'juu',ru:'10'},{jp:'ひゃく',r:'hyaku',ru:'100'},{jp:'せん',r:'sen',ru:'1000'}],
-  'Местоимения': [{jp:'わたし',r:'watashi',ru:'Я'},{jp:'あなた',r:'anata',ru:'Ты / Вы'},{jp:'かれ',r:'kare',ru:'Он'},{jp:'かのじょ',r:'kanojo',ru:'Она'},{jp:'わたしたち',r:'watashitachi',ru:'Мы'},{jp:'これ',r:'kore',ru:'Это (близко)'},{jp:'それ',r:'sore',ru:'То (у тебя)'},{jp:'あれ',r:'are',ru:'Вон то'}],
-  'Глаголы': [{jp:'います',r:'imasu',ru:'Есть / Быть (одуш.)'},{jp:'あります',r:'arimasu',ru:'Есть / Быть (неодуш.)'},{jp:'たべます',r:'tabemasu',ru:'Есть / Кушать'},{jp:'のみます',r:'nomimasu',ru:'Пить'},{jp:'いきます',r:'ikimasu',ru:'Идти'},{jp:'きます',r:'kimasu',ru:'Приходить'},{jp:'みます',r:'mimasu',ru:'Смотреть'},{jp:'ききます',r:'kikimasu',ru:'Слушать'},{jp:'かきます',r:'kakimasu',ru:'Писать'},{jp:'よみます',r:'yomimasu',ru:'Читать'}],
-  'Предметы': [{jp:'ほん',r:'hon',ru:'Книга'},{jp:'みず',r:'mizu',ru:'Вода'},{jp:'ごはん',r:'gohan',ru:'Рис / Еда'},{jp:'でんしゃ',r:'densha',ru:'Поезд'},{jp:'がっこう',r:'gakkou',ru:'Школа'},{jp:'いえ',r:'ie',ru:'Дом'},{jp:'てがみ',r:'tegami',ru:'Письмо'},{jp:'えんぴつ',r:'enpitsu',ru:'Карандаш'}],
-};
 
 // ── СОСТОЯНИЕ ──
 const S = {
@@ -559,7 +528,7 @@ function flip(t) {
 }
 function fcMove(t, dir) {
   const data=t==='h'?H:K, s=S[t];
-  s.idx=(s.idx+dir+data.length)%data.length; updateFC(t);
+  s.idx=getNextIdx(s.idx, dir, data.length); updateFC(t);
 }
 function learn(t) { S[t].learned.add(S[t].idx); fcMove(t,1); renderTable(t); updateUI(); }
 function setKanaMode(t, mode) {
@@ -580,17 +549,13 @@ function renderTable(t) {
 }
 function toggleLearn(t,i) {
   haptic('light');
-  if(S[t].learned.has(i)) S[t].learned.delete(i); else { S[t].learned.add(i); haptic('medium'); }
+  const wasLearned=S[t].learned.has(i);
+  S[t].learned=toggleLearnSet(S[t].learned, i);
+  if(!wasLearned) haptic('medium');
   renderTable(t); updateUI();
 }
 
 // ── QUIZ CORE ──
-function qPool() {
-  const m=S.quiz.kana;
-  if(m==='h') return H.map(x=>({...x,t:'h'}));
-  if(m==='k') return K.map(x=>({...x,t:'k'}));
-  return [...H.map(x=>({...x,t:'h'})),...K.map(x=>({...x,t:'k'}))];
-}
 function setQMode(mode) {
   S.quiz.mode=mode;
   ['select','type','reverse','draw'].forEach(m=>{
@@ -609,7 +574,7 @@ function nextQuestion() {
   ['sel-fb','type-fb','rev-fb','draw-fb'].forEach(id=>{
     const el=document.getElementById(id); if(el){el.textContent='';el.className='quiz-feedback';}
   });
-  const pool=qPool();
+  const pool=qPool(S.quiz.kana);
   S.quiz.current=pool[Math.floor(Math.random()*pool.length)];
   const m=S.quiz.mode;
   if(m==='select')  initSelect(pool);
@@ -619,7 +584,6 @@ function nextQuestion() {
 }
 function scoreOk()  { S.quiz.ok++; S.quiz.streak++; hapticN('success'); updateUI(); }
 function scoreErr() { S.quiz.no++; S.quiz.streak=0;  hapticN('error');   updateUI(); }
-function streakMsg(base) { return S.quiz.streak>2 ? `${base} 🔥 Серия: ${S.quiz.streak}` : base; }
 
 // ── РЕЖИМ 1: Выбор (кана → ромадзи) ──
 function initSelect(pool) {
@@ -639,7 +603,7 @@ function answerSelect(chosen) {
     else if(b.textContent===chosen&&chosen!==cor) b.classList.add('wrong');
   });
   const fb=document.getElementById('sel-fb');
-  if(chosen===cor) { scoreOk(); fb.textContent=streakMsg('✓ Верно!'); fb.className='quiz-feedback ok'; }
+  if(chosen===cor) { scoreOk(); fb.textContent=streakMsg(S.quiz.streak, '✓ Верно!'); fb.className='quiz-feedback ok'; }
   else             { scoreErr(); fb.textContent=`✗ Правильно: ${cor}`; fb.className='quiz-feedback no'; }
   setTimeout(nextQuestion, 1100);
 }
@@ -661,15 +625,13 @@ function onTypeInput() {
 function submitType() {
   if(S.quiz.answered) return;
   const inp=document.getElementById('type-input');
-  const val=inp.value.trim().toLowerCase(); if(!val) return;
+  const val=inp.value; if(!val.trim()) return;
   S.quiz.answered=true; inp.disabled=true;
   document.getElementById('type-submit-btn').disabled=true;
   const cor=S.quiz.current.r;
-  // Принимаем альтернативные транскрипции
-  const aliases={shi:['si'],chi:['ti'],tsu:['tu'],fu:['hu'],si:['shi'],ti:['chi'],tu:['tsu'],hu:['fu']};
-  const ok=[cor,...(aliases[cor]||[])].includes(val);
+  const ok=checkTypeAnswer(val, cor);
   const fb=document.getElementById('type-fb');
-  if(ok) { inp.className='type-input correct'; scoreOk(); fb.textContent=streakMsg('✓ Правильно!'); fb.className='quiz-feedback ok'; }
+  if(ok) { inp.className='type-input correct'; scoreOk(); fb.textContent=streakMsg(S.quiz.streak, '✓ Правильно!'); fb.className='quiz-feedback ok'; }
   else   { inp.className='type-input wrong';   scoreErr(); fb.textContent=`✗ Правильно: ${cor}`; fb.className='quiz-feedback no'; }
   setTimeout(nextQuestion, 1300);
 }
@@ -694,7 +656,7 @@ function answerReverse(chosen) {
     else if(b.textContent===chosen&&chosen!==cor) b.classList.add('wrong');
   });
   const fb=document.getElementById('rev-fb');
-  if(chosen===cor) { scoreOk(); fb.textContent=streakMsg('✓ Верно!'); fb.className='quiz-feedback ok'; }
+  if(chosen===cor) { scoreOk(); fb.textContent=streakMsg(S.quiz.streak, '✓ Верно!'); fb.className='quiz-feedback ok'; }
   else             { scoreErr(); fb.textContent=`✗ Правильно: ${cor}`; fb.className='quiz-feedback no'; }
   setTimeout(nextQuestion, 1200);
 }
@@ -758,7 +720,7 @@ function assessDraw(correct){
   if(S.quiz.answered)return; S.quiz.answered=true; haptic('medium');
   document.getElementById('draw-assess').classList.remove('show');
   const fb=document.getElementById('draw-fb');
-  if(correct){ scoreOk(); fb.textContent=streakMsg('✓ Отлично!'); fb.className='quiz-feedback ok'; }
+  if(correct){ scoreOk(); fb.textContent=streakMsg(S.quiz.streak, '✓ Отлично!'); fb.className='quiz-feedback ok'; }
   else        { scoreErr(); fb.textContent='✗ Ничего, в следующий раз получится!'; fb.className='quiz-feedback no'; }
   setTimeout(nextQuestion, 1400);
 }
@@ -776,6 +738,14 @@ function renderVlist(){
       <div style="flex:1"><div class="vocab-rom">${w.r}</div><div style="font-size:14px;font-weight:500">${w.ru}</div></div>
     </div>`).join('');
 }
+
+// Expose to global scope so inline onclick handlers work in module context.
+Object.assign(window, {
+  switchTab, haptic, setKanaMode, flip, fcMove, learn,
+  setQMode, setQKana, answerSelect, submitType, onTypeInput,
+  answerReverse, clearCanvas, cyclePen, revealAnswer, assessDraw,
+  selectCat, toggleLearn,
+});
 
 init();
 </script>
